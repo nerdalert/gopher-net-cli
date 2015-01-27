@@ -11,7 +11,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "gnet-ctl"
-	app.Usage = "gopher net command line tool"
+	app.Usage = "gopher net command line tool (use 'gnet-ctl <command> help' for detailed usage)"
 	app.Version = "0.1"
 	app.Commands = []cli.Command{
 		{
@@ -19,9 +19,8 @@ func main() {
 			Usage: "show and modify bgp neighbor states and configurations",
 			Subcommands: []cli.Command{
 				{
-					Name:   "",
-					Usage:  "gnet-ctl show { neighbors-conf | routes | neighbors | global-conf | rib-out | rib-in }",
-					Action: ShowNeighborsConfigs,
+					Usage:  "use 'gnet-ctl show help' for subcommand usage",
+					Action: cli.ShowSubcommandHelp,
 				},
 				{
 					Name:   "neighbors-conf",
