@@ -2,23 +2,53 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"mime/multipart"
+	"net"
 	"net/http"
 
 	log "github.com/nerdalert/gopher-net-ctl/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	"github.com/nerdalert/gopher-net-ctl/Godeps/_workspace/src/github.com/codegangsta/cli"
 )
 
-func ShowNeighbors(c *cli.Context) {
+var GnetCtlAdd = cli.Command{
+	Name:  "add",
+	Usage: "gnet-ctl add <option>",
+	Subcommands: []cli.Command{
+		{
+			Usage:  "use 'gnet-ctl add help' for subcommand usage",
+			Action: cli.ShowSubcommandHelp,
+		},
+		{
+			Name:   "neighbor",
+			Usage:  "gnet-ctl add bgp neighbor <ip_address of neighbor>",
+			Action: AddNeighdor,
+		},
+	},
+}
+
+type Neighbor struct {
+	NeighborIP  net.IP `json:"neighbor_ip"`
+	PeerAs      uint32 `json:"neighbor_as"`
+	Description string `json:"description"`
+}
+
+func AddNeighdor(c *cli.Context) {
 	log.Debugln("get routes CLI called")
 	client := NewClient()
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	writer.Close()
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8080"+NEIGHBORS, body)
+    // TODO: replace w/ param
+	ip := net.ParseIP("172.16.86.12")
+	neighbor := Neighbor{NeighborIP: ip, PeerAs: 32, Description: "WTF"}
+
+	j, err := json.Marshal(&neighbor)
 	if err != nil {
+		log.Println(err)
+		return
+	}
+	req, err := http.NewRequest("POST", "http://127.0.0.1:8080"+NEIGHBOR+ADD, bytes.NewBuffer(j))
+	if err != nil {
+		fmt.Printf("No answer from the bgp daemon: %s \n", err)
 		log.Error(error(err))
 		return
 	}
@@ -33,7 +63,6 @@ func ShowNeighbors(c *cli.Context) {
 		fmt.Printf("No answer from the bgp daemon: %s \n", err)
 		return
 	}
-
 	// Read Response
 	respBody, e := ioutil.ReadAll(resp.Body)
 	if e != nil {
