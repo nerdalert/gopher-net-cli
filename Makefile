@@ -1,5 +1,8 @@
 all: build test
 
+install:
+		go install golang.org/x/tools/cmd/vet
+
 build:
 		go build -v ./...
 		go fmt ./...
@@ -13,4 +16,6 @@ test:
 		go test -covermode=count -coverprofile=main.cover.out -test.short
 
 test-all:
+		make install
+		make build
 		go test -covermode=count -coverprofile=main.cover.out

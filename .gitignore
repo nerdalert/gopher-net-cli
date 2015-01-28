@@ -33,3 +33,6 @@ coverage.out
 
 # OS generated files
 .DS_Store
+
+#binary
+gopher-net-ctl
