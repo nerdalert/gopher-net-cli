@@ -26,3 +26,10 @@ _testmain.go
 # Intellij
 .idea/
 *.iml
+
+# Project-Specific
+*.cover.out
+coverage.out
+
+# OS generated files
+.DS_Store
