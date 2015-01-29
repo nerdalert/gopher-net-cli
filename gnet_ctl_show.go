@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -31,7 +30,7 @@ var GnetCtlShow = cli.Command{
 		},
 		{
 			Name:   "neighbors",
-			Usage:  "'gnet-ctl show neighbors' - show neighbor configurations",
+			Usage:  "'gnet-ctl show neighbors' - show all neighbor configurations",
 			Action: ShowNeighbors,
 		},
 		{
@@ -71,10 +70,9 @@ func ShowNeighbors(c *cli.Context) {
 	// Get Request
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("No answer from the bgp daemon: %s \n", err)
+		log.Errorf("No answer from the bgp daemon: %s \n", err)
 		return
 	}
-
 	// Read Response
 	respBody, e := ioutil.ReadAll(resp.Body)
 	if e != nil {
@@ -110,7 +108,7 @@ func ShowNeighborsConfigs(c *cli.Context) {
 	// Get Request
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("No answer from the bgp daemon: %s \n", err)
+		log.Errorf("No answer from the bgp daemon: %s \n", err)
 		return
 	}
 	// Read Response
@@ -148,7 +146,7 @@ func ShowGlobalConfig(c *cli.Context) {
 	// Get Request
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("No answer from the bgp daemon: %s \n", err)
+		log.Errorf("No answer from the bgp daemon: %s \n", err)
 		return
 	}
 	// Read Response
@@ -167,117 +165,116 @@ func ShowGlobalConfig(c *cli.Context) {
 	return
 }
 
-
 func ShowGetRoutes(c *cli.Context) {
-    log.Debugln("get routes CLI called")
-    client := NewClient()
-    body := &bytes.Buffer{}
-    writer := multipart.NewWriter(body)
-    writer.Close()
-    req, err := http.NewRequest("GET", "http://127.0.0.1:8080"+ROUTE_TABLES, body)
-    if err != nil {
-        log.Error(error(err))
-        return
-    }
-    parseFormErr := req.ParseForm()
-    if parseFormErr != nil {
-        log.Error(error(parseFormErr))
-        return
-    }
-    // Get Request
-    resp, err := client.Do(req)
-    if err != nil {
-        fmt.Printf("No answer from the bgp daemon: %s \n", err)
-        return
-    }
-    // Read Response
-    respBody, e := ioutil.ReadAll(resp.Body)
-    if e != nil {
-        return
-    }
-    if resp.Status == "404 Not Found" {
-        log.Println("requested data type not supported")
-    }
-    // Display Results
-    log.Debugln("response Status : ", resp.Status)
-    log.Debugln("response Headers : ", resp.Header)
-    log.Debugln("response Body : ", string(respBody))
-    log.Infoln("results: ", string(respBody))
-    return
+	log.Debugln("get routes CLI called")
+	client := NewClient()
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	writer.Close()
+	req, err := http.NewRequest("GET", "http://127.0.0.1:8080"+ROUTE_TABLES, body)
+	if err != nil {
+		log.Error(error(err))
+		return
+	}
+	parseFormErr := req.ParseForm()
+	if parseFormErr != nil {
+		log.Error(error(parseFormErr))
+		return
+	}
+	// Get Request
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("No answer from the bgp daemon: %s \n", err)
+		return
+	}
+	// Read Response
+	respBody, e := ioutil.ReadAll(resp.Body)
+	if e != nil {
+		return
+	}
+	if resp.Status == "404 Not Found" {
+		log.Println("requested data type not supported")
+	}
+	// Display Results
+	log.Debugln("response Status : ", resp.Status)
+	log.Debugln("response Headers : ", resp.Header)
+	log.Debugln("response Body : ", string(respBody))
+	log.Infoln("results: ", string(respBody))
+	return
 }
 
 func ShowRibIn(c *cli.Context) {
-    log.Debugln("get RIB_IN CLI called")
-    client := NewClient()
-    body := &bytes.Buffer{}
-    writer := multipart.NewWriter(body)
-    writer.Close()
-    req, err := http.NewRequest("GET", "http://127.0.0.1:8080"+RIB_IN, body)
-    if err != nil {
-        log.Error(error(err))
-        return
-    }
-    parseFormErr := req.ParseForm()
-    if parseFormErr != nil {
-        log.Error(error(parseFormErr))
-        return
-    }
-    // Get Request
-    resp, err := client.Do(req)
-    if err != nil {
-        fmt.Printf("No answer from the bgp daemon: %s \n", err)
-        return
-    }
-    // Read Response
-    respBody, e := ioutil.ReadAll(resp.Body)
-    if e != nil {
-        return
-    }
-    if resp.Status == "404 Not Found" {
-        log.Println("requested data type not supported")
-    }
-    // Display Results
-    log.Debugln("response Status : ", resp.Status)
-    log.Debugln("response Headers : ", resp.Header)
-    log.Debugln("response Body : ", string(respBody))
-    log.Infoln("results: ", string(respBody))
-    return
+	log.Debugln("get RIB_IN CLI called")
+	client := NewClient()
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	writer.Close()
+	req, err := http.NewRequest("GET", "http://127.0.0.1:8080"+RIB_IN, body)
+	if err != nil {
+		log.Error(error(err))
+		return
+	}
+	parseFormErr := req.ParseForm()
+	if parseFormErr != nil {
+		log.Error(error(parseFormErr))
+		return
+	}
+	// Get Request
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("No answer from the bgp daemon: %s \n", err)
+		return
+	}
+	// Read Response
+	respBody, e := ioutil.ReadAll(resp.Body)
+	if e != nil {
+		return
+	}
+	if resp.Status == "404 Not Found" {
+		log.Println("requested data type not supported")
+	}
+	// Display Results
+	log.Debugln("response Status : ", resp.Status)
+	log.Debugln("response Headers : ", resp.Header)
+	log.Debugln("response Body : ", string(respBody))
+	log.Infoln("results: ", string(respBody))
+	return
 }
 
 func ShowRibOut(c *cli.Context) {
-    log.Debugln("get RIB_OUT CLI called")
-    client := NewClient()
-    body := &bytes.Buffer{}
-    writer := multipart.NewWriter(body)
-    writer.Close()
-    req, err := http.NewRequest("GET", "http://127.0.0.1:8080"+RIB_OUT, body)
-    if err != nil {
-        log.Error(error(err))
-        return
-    }
-    parseFormErr := req.ParseForm()
-    if parseFormErr != nil {
-        log.Error(error(parseFormErr))
-        return
-    }
-    // Get Request
-    resp, err := client.Do(req)
-    if err != nil {
-        fmt.Printf("No answer from the bgp daemon: %s \n", err)
-        return
-    }
-    // Read Response
-    respBody, e := ioutil.ReadAll(resp.Body)
-    if e != nil {
-        return
-    }
-    if resp.Status == "404 Not Found" {
-        log.Println("requested data type not supported")
-    }
-    // Display Results
-    log.Debugln("response Status : ", resp.Status)
-    log.Debugln("response Headers : ", resp.Header)
-    log.Debugln("response Body : ", string(respBody))
-    log.Infoln("results: ", string(respBody))
-    return
+	log.Debugln("get RIB_OUT CLI called")
+	client := NewClient()
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	writer.Close()
+	req, err := http.NewRequest("GET", "http://127.0.0.1:8080"+RIB_OUT, body)
+	if err != nil {
+		log.Error(error(err))
+		return
+	}
+	parseFormErr := req.ParseForm()
+	if parseFormErr != nil {
+		log.Error(error(parseFormErr))
+		return
+	}
+	// Get Request
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("No answer from the bgp daemon: %s \n", err)
+		return
+	}
+	// Read Response
+	respBody, e := ioutil.ReadAll(resp.Body)
+	if e != nil {
+		return
+	}
+	if resp.Status == "404 Not Found" {
+		log.Println("requested data type not supported")
+	}
+	// Display Results
+	log.Debugln("response Status : ", resp.Status)
+	log.Debugln("response Headers : ", resp.Header)
+	log.Debugln("response Body : ", string(respBody))
+	log.Infoln("results: ", string(respBody))
+	return
 }

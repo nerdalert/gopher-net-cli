@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/nerdalert/gopher-net-ctl/Godeps/_workspace/src/github.com/codegangsta/cli"
+)
+
 const (
 	VERSION            = "/v1"
 	ROUTES             = "/bgp/routes"
@@ -24,4 +28,10 @@ const (
 	RIB_IN             = ROUTE_TABLES + RIB_IN_PREFIX
 	RIB_OUT            = ROUTE_TABLES + RIB_OUT_PREFIX
 	REST_PORT          = 8080
+)
+
+var (
+	NeighborIpFlag      = cli.StringFlag{Name: "neighbor-ip", Value: "", Usage: "ip address of the bgp neighbor", EnvVar: ""}
+	NeighborAsFlag      = cli.StringFlag{Name: "neighbor-as", Value: "", Usage: "ip address of the bgp neighbor", EnvVar: ""}
+	NeighborDescripFlag = cli.StringFlag{Name: "description", Value: "", Usage: "bgp neighbor description", EnvVar: ""}
 )

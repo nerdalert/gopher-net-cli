@@ -9,22 +9,22 @@ import (
 )
 
 func init() {
-    out = new(tabwriter.Writer)
-    out.Init(os.Stdout, 0, 8, 1, '\t', 0)
-    app.EnableBashCompletion = true
-    log.SetLevel(log.DebugLevel)
+	out = new(tabwriter.Writer)
+	out.Init(os.Stdout, 0, 8, 1, '\t', 0)
+	app.EnableBashCompletion = true
+	log.SetLevel(log.DebugLevel)
 }
 
 var (
-    out *tabwriter.Writer
-    app *cli.App = cli.NewApp()
+	out *tabwriter.Writer
+	app *cli.App = cli.NewApp()
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "gnet-ctl"
 	app.Usage = "command line utility for viewing and manipulating Gopher Net route peerings, " +
-		"state and configuration. All commands are functions are available via the REST APIs also."
+		"state and configuration. All commands are functions are also available via the daemon REST APIs."
 	app.Version = "0.1"
 	app.Commands = []cli.Command{
 		GnetCtlShow,

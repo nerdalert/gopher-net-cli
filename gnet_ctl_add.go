@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -21,34 +20,59 @@ var GnetCtlAdd = cli.Command{
 			Action: cli.ShowSubcommandHelp,
 		},
 		{
-			Name:   "neighbor",
-			Usage:  "gnet-ctl add bgp neighbor <ip_address of neighbor>",
+			Name: "neighbor",
+			Usage: "gnet-ctl add neighbor  --neighbor-ip=<ip_address of neighbor> --neighbor-as=<AS_number> \n" +
+				"\t(Example): 'gnet-ctl add neighbor --neighbor-ip=172.16.100.1 --neighbor-as=65001 --description=zone2-r1'",
+			Flags: []cli.Flag{
+				NeighborIpFlag,
+				NeighborAsFlag,
+				NeighborDescripFlag,
+			},
 			Action: AddNeighdor,
 		},
 	},
 }
 
+// TODO: temp struct
 type Neighbor struct {
 	NeighborIP  net.IP `json:"neighbor_ip"`
-	PeerAs      uint32 `json:"neighbor_as"`
+	NeighborAS  uint32 `json:"neighbor_as"`
 	Description string `json:"description"`
 }
 
 func AddNeighdor(c *cli.Context) {
-	log.Debugln("get routes CLI called")
 	client := NewClient()
-    // TODO: replace w/ param
-	ip := net.ParseIP("172.16.86.12")
-	neighbor := Neighbor{NeighborIP: ip, PeerAs: 32, Description: "WTF"}
-
-	j, err := json.Marshal(&neighbor)
+	bgpNeighbor := new(Neighbor)
+	rawIp := c.String("neighbor-ip")
+	var neighborIp net.IP
+	if rawIp != "" {
+		neighborIp = net.ParseIP(rawIp)
+	} else {
+		log.Error("a peer IP address is required to add a bgp neighbor")
+		return
+	}
+	var neighborAs uint32
+	neighborAsStr := c.String("neighbor-as")
+	if neighborAsStr != "" {
+		neighborAs = StrToUin32(neighborAsStr)
+	} else {
+		log.Error("an AS number is required to add a bgp neighbor")
+		return
+	}
+	bgpNeighbor.NeighborIP = neighborIp
+	bgpNeighbor.NeighborAS = neighborAs
+	description := c.String("description")
+	if description != "" {
+		bgpNeighbor.Description = description
+	}
+	j, err := json.Marshal(&bgpNeighbor)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	req, err := http.NewRequest("POST", "http://127.0.0.1:8080"+NEIGHBOR+ADD, bytes.NewBuffer(j))
 	if err != nil {
-		fmt.Printf("No answer from the bgp daemon: %s \n", err)
+		log.Errorf("No answer from the bgp daemon: %s \n", err)
 		log.Error(error(err))
 		return
 	}
@@ -60,7 +84,7 @@ func AddNeighdor(c *cli.Context) {
 	// Get Request
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("No answer from the bgp daemon: %s \n", err)
+		log.Errorf("No answer from the bgp daemon: %s \n", err)
 		return
 	}
 	// Read Response
@@ -69,7 +93,7 @@ func AddNeighdor(c *cli.Context) {
 		return
 	}
 	if resp.Status == "404 Not Found" {
-		log.Println("requested data type not supported")
+		log.Error("requested data type not supported")
 	}
 	// Display Results
 	log.Debugln("response Status : ", resp.Status)
