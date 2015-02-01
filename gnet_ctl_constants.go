@@ -37,6 +37,6 @@ var (
 	NeighborIpFlag      = cli.StringFlag{Name: "neighbor-ip", Value: "", Usage: "ip address of the bgp neighbor", EnvVar: ""}
 	NeighborAsFlag      = cli.StringFlag{Name: "neighbor-as", Value: "", Usage: "ip address of the bgp neighbor", EnvVar: ""}
 	NeighborDescripFlag = cli.StringFlag{Name: "description", Value: "", Usage: "bgp neighbor description", EnvVar: ""}
-	RouteIpPrefix       = cli.StringFlag{Name: "ip-prefix", Value: "", Usage: "ip prefix + / + prefix length divided by a slash.\n (Example): --ip-prefix=<network>/<mask> ", EnvVar: ""}
+	RouteIpPrefix       = cli.StringFlag{Name: "prefix", Value: "", Usage: "ip prefix + / + prefix length divided by a slash.\n (Example): --ip-prefix=<network>/<mask> ", EnvVar: ""}
 	RouteNextHop        = cli.StringFlag{Name: "nexthop", Value: "", Usage: "ip nexthop", EnvVar: "next IP hop to send destination traffic for a network prefix. (Example): --nexthop=<ip_address>"}
 )

@@ -30,6 +30,16 @@ var GnetCtlAdd = cli.Command{
 			},
 			Action: AddNeighdor,
 		},
+		{
+			Name: "route",
+			Usage: "gnet-ctl add route  --prefix=<ip_network/prefix> --nexthop=<ip_of_nexthop> \n" +
+				"\t(Example): 'gnet-ctl add route --neighbor-ip=172.16.100.100/32 --nexthop=172.16.100.1'",
+			Flags: []cli.Flag{
+				RouteIpPrefix,
+				RouteNextHop,
+			},
+			Action: AddRoute,
+		},
 	},
 }
 
@@ -103,10 +113,10 @@ func AddNeighdor(c *cli.Context) {
 	return
 }
 
-type RestRoute struct {
+type IpRoute struct {
 	IpPrefix    string `json:"ip_prefix"`
 	PrefixMask  uint8  `json:"ip_mask"`
-	NextHop     string `json:"ip_nexthop"`
+	NextHop     net.IP `json:"ip_nexthop"`
 	LocalPref   uint32 `json:"local_pref"`
 	RouteFam    string `json:"route_family"`
 	ExCommunity string `json:"opaque"`
@@ -114,30 +124,43 @@ type RestRoute struct {
 
 func AddRoute(c *cli.Context) {
 	client := NewClient()
-	bgpNeighbor := new(Neighbor)
-	strIp := c.String("local-pref")
-	var neighborIp net.IP
+	ipRoute := new(IpRoute)
+	strIp := c.String("prefix")
+	var cidr *net.IPNet
+	var err error
+
 	if strIp != "" {
-		neighborIp = net.ParseIP(strIp)
+		cidr, err = GetCidr(strIp)
+		if err != nil {
+			log.Error("Error parsing a valid ip prefix.")
+			return
+		}
 	} else {
-		log.Error("a peer IP address is required to add a bgp neighbor")
+		log.Error("a valid ip prefix or resolvable hostname is required")
 		return
 	}
-	var neighborAs uint32
-	neighborAsStr := c.String("neighbor-as")
-	if neighborAsStr != "" {
-		neighborAs = StrToUin32(neighborAsStr)
+
+	var nexthop net.IP
+	if strIp != "" {
+		nexthop = net.ParseIP(strIp)
 	} else {
-		log.Error("an AS number is required to add a bgp neighbor")
+		log.Error("a valid ip nexthop or resolvable hostname is required")
 		return
 	}
-	bgpNeighbor.NeighborIP = neighborIp
-	bgpNeighbor.NeighborAS = neighborAs
-	description := c.String("description")
-	if description != "" {
-		bgpNeighbor.Description = description
+	var mlen int
+	if cidr.Mask != nil {
+		mlen, _ = cidr.Mask.Size()
 	}
-	j, err := json.Marshal(&bgpNeighbor)
+	var preflen uint8
+	preflen = uint8(mlen)
+	ipRoute.NextHop = nexthop
+	ipRoute.IpPrefix = cidr.IP.String()
+	ipRoute.PrefixMask = preflen
+
+	j, err := json.Marshal(&ipRoute)
+
+    log.Debugf("Add Route Rest Request: %s ", j)
+
 	if err != nil {
 		log.Println(err)
 		return
