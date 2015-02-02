@@ -20,8 +20,8 @@ func StrToUin32(s string) uint32 {
 	return n32
 }
 
-func isValidIp(url string) bool {
-	return ValidV4RegEx.MatchString(url)
+func isValidIp(s string) bool {
+	return ValidV4RegEx.MatchString(s)
 }
 
 func dnsLookup(s string) (string, error) {
@@ -54,7 +54,7 @@ func GetCidr(ipstr string) (*net.IPNet, error) {
 	// if the string is not an ip address, try to resolve an ip from hostname
 	ipstr = strings.TrimSpace(ipstr)
 	if resolvedIP, err := dnsLookup(ipstr); err == nil {
-		fmt.Println("hostname received, resolved host route:", getHostRoute(resolvedIP))
+		log.Debug("hostname received, resolved host route:", getHostRoute(resolvedIP))
 		return getHostRoute(resolvedIP), nil
 	}
 	return nil, errors.New("No valid IP address, CIDR or resolvable hostname found")

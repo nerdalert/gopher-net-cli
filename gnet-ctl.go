@@ -2,26 +2,21 @@ package main
 
 import (
 	"os"
-	"text/tabwriter"
 
 	log "github.com/nerdalert/gopher-net-ctl/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	"github.com/nerdalert/gopher-net-ctl/Godeps/_workspace/src/github.com/codegangsta/cli"
 )
 
 func init() {
-	out = new(tabwriter.Writer)
-	out.Init(os.Stdout, 0, 8, 1, '\t', 0)
 	app.EnableBashCompletion = true
 	log.SetLevel(log.DebugLevel)
 }
 
 var (
-	out *tabwriter.Writer
 	app *cli.App = cli.NewApp()
 )
 
 func main() {
-	app := cli.NewApp()
 	app.Name = "gnet-ctl"
 	app.Usage = "command line utility for viewing and manipulating Gopher Net route peerings, " +
 		"state and configuration. All commands are functions are also available via the daemon REST APIs."
@@ -31,5 +26,23 @@ func main() {
 		GnetCtlAdd,
 		GnetCtlDelete,
 	}
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "debug, d",
+			Usage: "set gnet-ctl logging to debug.",
+		},
+	}
+	app.Before = cliInit
 	app.Run(os.Args)
+}
+
+func cliInit(c *cli.Context) error {
+	if c.GlobalBool("debug") {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
+	app.EnableBashCompletion = true
+	log.SetOutput(os.Stderr)
+	return nil
 }

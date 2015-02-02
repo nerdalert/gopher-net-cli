@@ -21,7 +21,9 @@ var GnetCtlAdd = cli.Command{
 		},
 		{
 			Name: "neighbor",
-			Usage: "gnet-ctl add neighbor  --neighbor-ip=<ip_address of neighbor> --neighbor-as=<AS_number> \n" +
+			Usage: "Add a BGP Neighbor to the specified node to form a peering " +
+				"(note: must be added to both sides of the peers): " +
+				"'gnet-ctl add neighbor  --neighbor-ip=<ip_address of neighbor> --neighbor-as=<AS_number>' \n" +
 				"\t(Example): 'gnet-ctl add neighbor --neighbor-ip=172.16.100.1 --neighbor-as=65001 --description=zone2-r1'",
 			Flags: []cli.Flag{
 				NeighborIpFlag,
@@ -32,8 +34,9 @@ var GnetCtlAdd = cli.Command{
 		},
 		{
 			Name: "route",
-			Usage: "gnet-ctl add route  --prefix=<ip_network/prefix> --nexthop=<ip_of_nexthop> \n" +
-				"\t(Example): 'gnet-ctl add route --neighbor-ip=172.16.100.100/32 --nexthop=172.16.100.1'",
+			Usage: "Advertise a new IP Route from the specified node:" +
+				"  'gnet-ctl add route --prefix=<ip_network/prefix> --nexthop=<ip_of_nexthop>' \n" +
+				"\t(Example): 'gnet-ctl add route --prefix=172.16.100.100/32 --nexthop=172.16.100.1'",
 			Flags: []cli.Flag{
 				RouteIpPrefix,
 				RouteNextHop,
@@ -116,18 +119,25 @@ func AddNeighdor(c *cli.Context) {
 type IpRoute struct {
 	IpPrefix    string `json:"ip_prefix"`
 	PrefixMask  uint8  `json:"ip_mask"`
-	NextHop     net.IP `json:"ip_nexthop"`
+	NextHop     string `json:"ip_nexthop"`
 	LocalPref   uint32 `json:"local_pref"`
 	RouteFam    string `json:"route_family"`
 	ExCommunity string `json:"opaque"`
 }
 
 func AddRoute(c *cli.Context) {
+	var (
+		cidr         *net.IPNet
+		err          error
+		preflen      uint8
+		mlen         int
+		typedNextHop net.IP
+	)
 	client := NewClient()
 	ipRoute := new(IpRoute)
+	// Parse cli flag input
 	strIp := c.String("prefix")
-	var cidr *net.IPNet
-	var err error
+	strNextHop := c.String("nexthop")
 
 	if strIp != "" {
 		cidr, err = GetCidr(strIp)
@@ -139,35 +149,32 @@ func AddRoute(c *cli.Context) {
 		log.Error("a valid ip prefix or resolvable hostname is required")
 		return
 	}
-
-	var nexthop net.IP
-	if strIp != "" {
-		nexthop = net.ParseIP(strIp)
+	// validate/type the provided ip via net.IP then cast back to string
+	if strNextHop != "" {
+		typedNextHop = net.ParseIP(strNextHop)
 	} else {
-		log.Error("a valid ip nexthop or resolvable hostname is required")
+		log.Error("a valid ip nexthop is required")
 		return
 	}
-	var mlen int
 	if cidr.Mask != nil {
 		mlen, _ = cidr.Mask.Size()
 	}
-	var preflen uint8
 	preflen = uint8(mlen)
-	ipRoute.NextHop = nexthop
+	ipRoute.NextHop = typedNextHop.String()
 	ipRoute.IpPrefix = cidr.IP.String()
 	ipRoute.PrefixMask = preflen
-
+	log.Debugf("sending route addition request for Prefix: %s/%d Nexthop: %s",
+		ipRoute.IpPrefix, ipRoute.PrefixMask, ipRoute.NextHop)
 	j, err := json.Marshal(&ipRoute)
-
-    log.Debugf("Add Route Rest Request: %s ", j)
-
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	log.Debugf("marshalled route rest request: %s ", j)
+	// http post rout request
 	req, err := http.NewRequest("POST", "http://127.0.0.1:8080"+ROUTE_TABLES+ADD, bytes.NewBuffer(j))
 	if err != nil {
-		log.Errorf("No answer from the bgp daemon: %s \n", err)
+		log.Errorf("no answer from the bgp daemon: %s \n", err)
 		log.Error(error(err))
 		return
 	}
@@ -179,7 +186,7 @@ func AddRoute(c *cli.Context) {
 	// Get Request
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Errorf("No answer from the bgp daemon: %s \n", err)
+		log.Errorf("no answer from the bgp daemon: %s \n", err)
 		return
 	}
 	// Read Response
@@ -190,7 +197,7 @@ func AddRoute(c *cli.Context) {
 	if resp.Status == "404 Not Found" {
 		log.Error("requested data type not supported")
 	}
-	// Display Results
+	// Display Results for debugging
 	log.Debugln("response Status : ", resp.Status)
 	log.Debugln("response Headers : ", resp.Header)
 	log.Debugln("response Body : ", string(respBody))
